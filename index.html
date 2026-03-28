@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroMente — Pensamento Computacional no Agronegócio</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script>
+// Stub seguro: se o EmailJS não carregar, o jogo continua funcionando normalmente
+window.emailjs = {
+  init: function(){},
+  send: function(){ return Promise.resolve(); }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onerror="console.warn('EmailJS não carregou — envio de e-mail desativado.')"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --verde:#2d7a3a;--verde-d:#1a4f22;--verde-l:#4CAF50;--verde-bg:#e8f5e9;
+  --terra:#8B5E3C;--terra-l:#C4895A;
+  --amarelo:#F5C842;--amarelo-d:#D4A017;
+  --ceu:#5BA4CF;
+  --bg:#f6f0e4;--card:#fffdf6;
+  --text:#2a1e0f;--text-m:#5a4a30;--text-s:#8a7a60;
+  --border:rgba(0,0,0,0.10);
+  --err:#c0392b;--err-bg:#ffeaea;
+}
+html{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+h1,h2,h3,.font-baloo{font-family:'Baloo 2',cursive}
+
+/* ── TELA BOAS-VINDAS ── */
+#tela-bv{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:32px 20px;text-align:center;
+}
+.logo-anim{font-size:72px;animation:float 3s ease-in-out infinite;display:block;margin-bottom:8px}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.titulo-principal{font-size:36px;font-weight:800;color:var(--verde);line-height:1.1;margin-bottom:4px}
+.subtitulo{font-size:14px;color:var(--text-m);margin-bottom:28px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}
+.tag{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700}
+.tag-verde{background:var(--verde-bg);color:var(--verde)}
+.tag-terra{background:#fff3e0;color:var(--terra)}
+.tag-ceu{background:#e3f2fd;color:#1565c0}
+
+.card-nome{
+  background:var(--card);border-radius:20px;
+  border:1.5px solid var(--border);
+  padding:28px 28px 24px;max-width:440px;width:100%;
+  box-shadow:0 4px 20px rgba(0,0,0,0.07);margin-bottom:20px;
+}
+.card-nome h2{font-size:18px;font-weight:700;color:var(--verde);margin-bottom:6px}
+.card-nome p{font-size:13px;color:var(--text-m);margin-bottom:18px;line-height:1.5}
+.input-nome{
+  width:100%;padding:14px 16px;font-size:16px;font-family:'Nunito',sans-serif;
+  border:2px solid var(--border);border-radius:12px;
+  background:white;color:var(--text);outline:none;
+  transition:border-color .2s;
+}
+.input-nome:focus{border-color:var(--verde)}
+.input-nome.erro{border-color:var(--err)}
+.msg-erro{color:var(--err);font-size:12px;margin-top:6px;display:none}
+
+.pilares-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;max-width:440px;width:100%}
+.pilar-card{background:var(--card);border-radius:14px;border:1.5px solid var(--border);padding:14px;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.pilar-card .ico{font-size:22px;display:block;margin-bottom:6px}
+.pilar-card strong{display:block;font-size:13px;color:var(--verde);margin-bottom:2px}
+.pilar-card span{font-size:12px;color:var(--text-m);line-height:1.4}
+
+/* ── BOTÕES ── */
+.btn-primario{
+  background:var(--verde);color:white;
+  font-family:'Baloo 2',cursive;font-size:18px;font-weight:700;
+  border:none;border-radius:50px;padding:15px 40px;
+  cursor:pointer;box-shadow:0 5px 0 var(--verde-d);
+  transition:transform .1s,box-shadow .1s;
+  width:100%;max-width:440px;
+}
+.btn-primario:active{transform:translateY(3px);box-shadow:0 2px 0 var(--verde-d)}
+.btn-primario:disabled{background:#aaa;box-shadow:0 5px 0 #888;cursor:not-allowed}
+.btn-amarelo{
+  background:var(--amarelo-d);color:white;
+  font-family:'Baloo 2',cursive;font-size:16px;font-weight:700;
+  border:none;border-radius:50px;padding:13px;
+  cursor:pointer;box-shadow:0 4px 0 #9a6800;
+  transition:transform .1s;width:100%;display:none;margin-bottom:8px;
+}
+.btn-amarelo:active{transform:translateY(2px)}
+.btn-secundario{
+  width:100%;background:none;border:2px solid var(--verde);
+  color:var(--verde);font-family:'Baloo 2',cursive;font-size:14px;font-weight:700;
+  border-radius:50px;padding:12px;cursor:pointer;margin-bottom:8px;
+  transition:background .2s;
+}
+.btn-secundario:hover{background:var(--verde-bg)}
+
+/* ── HEADER DO JOGO ── */
+#tela-jogo{display:none}
+.game-header{
+  background:var(--verde);padding:12px 20px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:10;
+}
+.fase-badge{
+  background:var(--amarelo);color:var(--terra);
+  font-family:'Baloo 2',cursive;font-weight:700;
+  font-size:13px;padding:4px 12px;border-radius:20px;
+}
+.fase-nome{font-family:'Baloo 2',cursive;color:white;font-size:16px;font-weight:600;flex:1}
+.xp-display{background:rgba(255,255,255,.15);color:white;padding:4px 12px;border-radius:20px;font-size:14px}
+.nome-display{color:rgba(255,255,255,.8);font-size:12px}
+.progress-bar{height:6px;background:rgba(255,255,255,.3)}
+.progress-fill{height:100%;background:var(--amarelo);transition:width .5s ease}
+
+/* ── MISSÃO ── */
+.missao-wrap{padding:16px 20px}
+.missao-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.missao-icon{font-size:30px}
+.missao-titulo{font-family:'Baloo 2',cursive;font-size:18px;font-weight:700;color:var(--verde)}
+.missao-subtipo{font-size:12px;color:var(--text-m)}
+.pilar-tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;background:var(--verde-bg);color:var(--verde);margin-bottom:12px}
+.enunciado{background:white;border-radius:14px;padding:16px 18px;border:1.5px solid var(--border);margin-bottom:16px;font-size:14px;line-height:1.75;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.enunciado strong{color:var(--verde)}
+
+/* Decomposição */
+.decomp-lista{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.decomp-item{display:flex;align-items:center;gap:10px;background:white;border-radius:12px;border:2px solid var(--border);padding:11px 14px;cursor:pointer;transition:all .2s;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+.decomp-item:hover{border-color:var(--verde-l)}
+.decomp-item.sel{border-color:var(--verde);background:var(--verde-bg)}
+.decomp-item.errado{border-color:var(--err);background:var(--err-bg)}
+.decomp-check{width:24px;height:24px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
+.decomp-item.sel .decomp-check{background:var(--verde);border-color:var(--verde);color:white}
+.decomp-item.errado .decomp-check{background:var(--err);border-color:var(--err);color:white}
+
+/* Quiz */
+.opcoes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.opcao-btn{background:white;border:2px solid var(--border);border-radius:14px;padding:14px 12px;cursor:pointer;font-size:13px;font-family:'Nunito',sans-serif;line-height:1.5;text-align:center;color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,0.04);transition:all .2s}
+.opcao-btn:hover:not(:disabled){border-color:var(--ceu);background:#f0f8ff}
+.opcao-btn.correta{border-color:var(--verde);background:var(--verde-bg);color:var(--verde-d)}
+.opcao-btn.errada{border-color:var(--err);background:var(--err-bg);color:var(--err)}
+
+/* Algoritmo */
+.banco{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;background:#f0ede4;border-radius:12px;padding:12px;min-height:56px;border:1.5px dashed #c8bfa0}
+.chip-instrucao{background:white;border:2px solid var(--terra-l);border-radius:8px;padding:7px 13px;font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--terra);font-weight:700;transition:all .2s}
+.chip-instrucao:hover{background:#fff8f0;transform:scale(1.03)}
+.chip-instrucao.usado{opacity:.3;pointer-events:none}
+.slots{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.slot{min-height:44px;border-radius:10px;border:2px dashed #ccc;padding:8px 14px;font-size:13px;color:#aaa;display:flex;align-items:center;gap:8px;background:white;transition:all .2s}
+.slot.cheio{border-style:solid;border-color:var(--verde);color:var(--text)}
+.slot-num{font-family:'Baloo 2',cursive;font-weight:700;color:var(--verde);font-size:13px;min-width:20px}
+.slot-clear{margin-left:auto;background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 4px;line-height:1}
+.slot-clear:hover{color:var(--err)}
+
+/* Feedback */
+.feedback{border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.65;display:none}
+.feedback.ok{background:var(--verde-bg);border:1.5px solid var(--verde);color:#1a4422}
+.feedback.fail{background:var(--err-bg);border:1.5px solid var(--err);color:#7a1a1a}
+.feedback-titulo{font-family:'Baloo 2',cursive;font-weight:700;font-size:15px;margin-bottom:4px}
+
+.btn-verificar{
+  width:100%;background:var(--verde);color:white;
+  font-family:'Baloo 2',cursive;font-size:16px;font-weight:700;
+  border:none;border-radius:50px;padding:14px;
+  cursor:pointer;box-shadow:0 4px 0 var(--verde-d);
+  transition:transform .1s,box-shadow .1s;margin-bottom:8px;
+}
+.btn-verificar:active{transform:translateY(2px);box-shadow:0 2px 0 var(--verde-d)}
+.btn-verificar:disabled{background:#aaa;box-shadow:0 4px 0 #888;cursor:not-allowed}
+
+/* ── RESULTADO ── */
+#tela-resultado{display:none;padding:32px 20px;text-align:center;min-height:100vh;display:none;flex-direction:column;align-items:center}
+.res-icon{font-size:80px;animation:float 2s ease-in-out infinite;margin-bottom:10px}
+.res-titulo{font-size:28px;font-weight:800;color:var(--verde);margin-bottom:4px}
+.res-sub{font-size:14px;color:var(--text-m);margin-bottom:24px}
+.placar{background:var(--verde);color:white;border-radius:20px;padding:20px 32px;margin-bottom:20px;display:inline-block}
+.placar-label{font-size:13px;opacity:.8}
+.placar-num{font-family:'Baloo 2',cursive;font-size:52px;font-weight:800;line-height:1}
+.placar-max{font-size:13px;opacity:.7}
+.card-res{background:white;border-radius:16px;border:1.5px solid var(--border);padding:18px;margin-bottom:16px;text-align:left;box-shadow:0 2px 10px rgba(0,0,0,0.05);max-width:520px;width:100%}
+.card-res h3{font-size:13px;color:var(--text-s);margin-bottom:12px;font-weight:700}
+.conquista{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.conq-ico{font-size:24px}
+.conq-nome{font-weight:700;color:var(--verde);display:block;font-size:13px}
+.conq-desc{font-size:12px;color:var(--text-m)}
+.pilar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pilar-lbl{font-size:12px;width:130px;flex-shrink:0;color:var(--text-m)}
+.pilar-bar{flex:1;height:10px;background:#eee;border-radius:10px;overflow:hidden}
+.pilar-fill{height:100%;border-radius:10px;transition:width 1s ease}
+
+/* E-mail status */
+.email-status{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  border-radius:12px;font-size:13px;margin-bottom:14px;
+  max-width:520px;width:100%;
+}
+.email-status.enviando{background:#e3f2fd;border:1.5px solid #90caf9;color:#1565c0}
+.email-status.ok{background:var(--verde-bg);border:1.5px solid var(--verde);color:var(--verde-d)}
+.email-status.err{background:var(--err-bg);border:1.5px solid var(--err);color:var(--err)}
+
+/* XP pop */
+.xp-pop{
+  position:fixed;top:70px;right:16px;
+  background:var(--amarelo);color:var(--terra);
+  font-family:'Baloo 2',cursive;font-weight:700;font-size:20px;
+  padding:8px 20px;border-radius:30px;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
+  animation:xpAnim 1.5s forwards;pointer-events:none;z-index:999;
+}
+@keyframes xpAnim{
+  0%{opacity:0;transform:translateY(10px) scale(.8)}
+  15%{opacity:1;transform:translateY(0) scale(1.1)}
+  30%{transform:scale(1)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translateY(-24px)}
+}
+
+@media(max-width:480px){
+  .opcoes-grid{grid-template-columns:1fr}
+  .pilares-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     TELA BOAS-VINDAS + NOME
+══════════════════════════════ -->
+<div id="tela-bv">
+  <span class="logo-anim">🌾</span>
+  <div class="titulo-principal">AgroMente</div>
+  <div class="subtitulo">Pensamento Computacional no Agronegócio</div>
+
+  <div class="tags">
+    <span class="tag tag-verde">🏫 1º Ano EM</span>
+    <span class="tag tag-terra">🌱 Técnico em Agronegócio</span>
+    <span class="tag tag-ceu">💡 4 Pilares</span>
+  </div>
+
+  <div class="pilares-grid">
+    <div class="pilar-card"><span class="ico">🧩</span><strong>Decomposição</strong><span>Dividir problemas em partes menores</span></div>
+    <div class="pilar-card"><span class="ico">🔄</span><strong>Rec. de Padrões</strong><span>Identificar repetições e ciclos</span></div>
+    <div class="pilar-card"><span class="ico">🔍</span><strong>Abstração</strong><span>Focar no que é essencial</span></div>
+    <div class="pilar-card"><span class="ico">📋</span><strong>Algoritmos</strong><span>Criar soluções passo a passo</span></div>
+  </div>
+
+  <div class="card-nome">
+    <h2>👤 Como você se chama?</h2>
+    <p>Digite seu nome completo antes de começar. Seu resultado será enviado para a professora ao final.</p>
+    <input class="input-nome" id="inp-nome" type="text" placeholder="Ex: João da Silva" maxlength="60"
+      oninput="validarNome()" onkeydown="if(event.key==='Enter')iniciar()">
+    <div class="msg-erro" id="msg-erro">Por favor, digite seu nome antes de começar.</div>
+  </div>
+
+  <button class="btn-primario" id="btn-iniciar" onclick="iniciar()">🚜 Começar a Missão!</button>
+</div>
+
+<!-- ══════════════════════════════
+     TELA JOGO
+══════════════════════════════ -->
+<div id="tela-jogo">
+  <div class="game-header">
+    <span class="fase-badge" id="badge-fase">Missão 1/4</span>
+    <span class="fase-nome" id="nome-fase">—</span>
+    <span class="xp-display">⭐ <span id="xp-atual">0</span> XP</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="missao-wrap" id="missao-wrap"></div>
+</div>
+
+<!-- ══════════════════════════════
+     TELA RESULTADO
+══════════════════════════════ -->
+<div id="tela-resultado" style="display:none;flex-direction:column;align-items:center;padding:32px 20px;text-align:center">
+  <div class="res-icon" id="res-icon">🏆</div>
+  <div class="res-titulo font-baloo" id="res-titulo">Missão Cumprida!</div>
+  <div class="res-sub" id="res-sub"></div>
+
+  <div class="placar">
+    <div class="placar-label">Sua pontuação</div>
+    <div class="placar-num font-baloo" id="placar-num">0</div>
+    <div class="placar-max">de 400 XP</div>
+  </div>
+
+  <div class="email-status" id="email-status" style="display:none"></div>
+
+  <div class="card-res">
+    <h3>🏅 CONQUISTAS DESBLOQUEADAS</h3>
+    <div id="conquistas"></div>
+  </div>
+
+  <div class="card-res">
+    <h3>📊 DESEMPENHO POR PILAR</h3>
+    <div id="pilares-res"></div>
+  </div>
+
+  <div style="max-width:520px;width:100%">
+    <button class="btn-primario" style="margin-bottom:10px" onclick="reiniciar()">🔄 Tentar Novamente</button>
+    <button class="btn-secundario" onclick="location.reload()">🏠 Tela Inicial</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     DADOS DO JOGO
+══════════════════════════════ -->
+<script>
+const EMAILJS_SERVICE  = 'service_bnwn9rl';
+const EMAILJS_TEMPLATE = 'template_gmbvp1n';
+const EMAILJS_KEY      = 'Fa8qHc9ggPuducsAS';
+
+const MISSOES = [
+  {
+    id:1, pilar:'Decomposição', icon:'🧩',
+    tema:'🌱 Plantio de Soja', titulo:'Decompondo o Plantio',
+    tipo:'decomp',
+    enunciado:`O gerente pediu para <strong>preparar e plantar 500 hectares de soja</strong>. O problema parece enorme! Usando a <strong>decomposição</strong>, identifique quais etapas fazem realmente parte desse processo. Selecione TODAS as tarefas necessárias:`,
+    itens:[
+      {txt:'🧪 Análise do solo para correção de pH',correto:true},
+      {txt:'📺 Assistir documentário sobre soja',correto:false},
+      {txt:'🚜 Preparo do solo (aração e gradagem)',correto:true},
+      {txt:'🌡️ Verificar previsão do tempo e clima',correto:true},
+      {txt:'🧬 Escolha da variedade de soja adaptada',correto:true},
+      {txt:'📱 Atualizar o Instagram da fazenda',correto:false},
+    ],
+    fb_ok:'Perfeito! Você decompôs o problema corretamente. Ao dividir "plantar 500 ha de soja" em etapas menores — análise do solo, preparo, variedade e clima — o problema fica muito mais gerenciável. Isso é decomposição!',
+    fb_err:'Quase! Lembre-se: na decomposição separamos as etapas que realmente pertencem ao processo. Itens como assistir documentários ou postar nas redes não são etapas do plantio.',
+    xp:100
+  },
+  {
+    id:2, pilar:'Reconhecimento de Padrões', icon:'🔄',
+    tema:'🌧️ Análise de Chuvas', titulo:'Padrões Climáticos',
+    tipo:'quiz',
+    enunciado:`O técnico registrou a precipitação mensal (mm) durante 8 meses e identificou um <strong>padrão que se repete</strong>.<br><br>Dados: <strong>85 · 120 · 45 · 85 · 120 · 45 · 85 · ___</strong><br><br>Qual resposta descreve melhor o padrão <em>e</em> o próximo valor?`,
+    opcoes:[
+      {txt:'O padrão é crescente (+35mm). Próximo: 120mm',correto:false},
+      {txt:'O padrão repete a cada 3 meses (85→120→45). Próximo: 120mm ✓',correto:true},
+      {txt:'Não existe padrão; os dados são aleatórios.',correto:false},
+      {txt:'O padrão alterna alto e baixo. Próximo: 45mm',correto:false},
+    ],
+    fb_ok:'Excelente! Você reconheceu o ciclo 85→120→45 que se repete a cada 3 meses. No agronegócio, identificar padrões climáticos é crucial para planejar plantio, irrigação e colheita!',
+    fb_err:'Observe com atenção: 85, 120, 45 — e depois 85, 120, 45 novamente! O padrão se repete a cada 3 meses. Isso é reconhecimento de padrões: identificar regularidades nos dados.',
+    xp:100
+  },
+  {
+    id:3, pilar:'Abstração', icon:'🔍',
+    tema:'💊 Manejo de Pragas', titulo:'Modelando o Problema',
+    tipo:'quiz',
+    enunciado:`Uma fazenda de milho tem infestação de lagartas. O agrônomo quer criar um <strong>modelo simplificado</strong> para decidir quando aplicar defensivos.<br><br>Na abstração, ignoramos o que é irrelevante e focamos no essencial. Quais informações são <strong>realmente necessárias</strong> para decidir sobre a aplicação?`,
+    opcoes:[
+      {txt:'🔢 Qtd. de lagartas por planta, fase da cultura, preço e eficácia do defensivo',correto:true},
+      {txt:'📅 Data de fundação da fazenda e nome do proprietário',correto:false},
+      {txt:'🎨 Cor das lagartas, nome científico completo e histórico de 50 anos',correto:false},
+      {txt:'🌤️ Temperatura do dia, hora exata e cor do trator disponível',correto:false},
+    ],
+    fb_ok:'Ótimo raciocínio! Abstração = selecionar só o que importa. Para decidir sobre defensivos precisamos: nível de infestação, estágio da planta, custo e eficácia. O nome do dono ou a cor do trator são irrelevantes para essa decisão!',
+    fb_err:'Pense: abstração é eliminar o que não importa. Para aplicar defensivo, você precisa saber quantas pragas existem, em que fase está a planta e qual produto usar. Informações como nome do dono ou data de fundação não ajudam.',
+    xp:100
+  },
+  {
+    id:4, pilar:'Algoritmos', icon:'📋',
+    tema:'🐄 Ordenha Automatizada', titulo:'Algoritmo de Ordenha',
+    tipo:'algoritmo',
+    enunciado:`A fazenda instalou um sistema de <strong>ordenha automatizada</strong>. Você precisa programar o algoritmo correto.<br><br>Toque nas etapas abaixo na <strong>ordem correta</strong> para montar o algoritmo:`,
+    etapas:[
+      '🐄 Identificar a vaca pelo chip RFID',
+      '🚿 Limpar e desinfetar os tetos',
+      '🔌 Conectar as teteiras ao úbere',
+      '🥛 Realizar a ordenha (controle de fluxo)',
+      '💉 Aplicar pós-dipping (desinfecção)',
+      '📊 Registrar volume e qualidade no sistema',
+    ],
+    ordem_correta:[0,1,2,3,4,5],
+    fb_ok:'Algoritmo perfeito! Sequência: identificar → limpar → conectar → ordenhar → desinfetar → registrar. Um algoritmo é exatamente isso: passos lógicos e ordenados para resolver um problema. No agro moderno, algoritmos controlam processos como esse!',
+    fb_err:'A ordem importa em algoritmos! Não dá para conectar as teteiras antes de limpar os tetos, nem registrar antes de ordenhar. Pense na sequência lógica de cada etapa.',
+    xp:100
+  }
+];
+
+// Estado
+let nomeAluno='', missaoAtual=0, xpTotal=0, acertos=[];
+let opcaoSel=null, decompSel=[], slotsFill=[];
+
+// ── INIT EmailJS (com proteção contra falha de carregamento) ──
+try { emailjs.init(EMAILJS_KEY); } catch(e) { console.warn('EmailJS indisponível:', e); }
+
+// ── VALIDAÇÃO NOME ──
+function validarNome(){
+  const v = document.getElementById('inp-nome').value.trim();
+  document.getElementById('inp-nome').classList.toggle('erro', v.length===0);
+  document.getElementById('msg-erro').style.display = v.length===0?'block':'none';
+}
+
+function iniciar(){
+  const nome = document.getElementById('inp-nome').value.trim();
+  if(!nome){
+    document.getElementById('inp-nome').classList.add('erro');
+    document.getElementById('msg-erro').style.display='block';
+    document.getElementById('inp-nome').focus();
+    return;
+  }
+  nomeAluno=nome; missaoAtual=0; xpTotal=0; acertos=[]; opcaoSel=null;
+  document.getElementById('tela-bv').style.display='none';
+  document.getElementById('tela-jogo').style.display='block';
+  carregarMissao();
+}
+
+// ── CARREGAR MISSÃO ──
+function carregarMissao(){
+  const m = MISSOES[missaoAtual];
+  opcaoSel=null; decompSel=[]; slotsFill=new Array(m.etapas?.length||0).fill(null);
+
+  document.getElementById('badge-fase').textContent=`Missão ${missaoAtual+1}/4`;
+  document.getElementById('nome-fase').textContent=m.tema;
+  document.getElementById('xp-atual').textContent=xpTotal;
+  document.getElementById('prog').style.width=`${(missaoAtual/4)*100}%`;
+
+  let html=`
+    <div class="missao-header">
+      <span class="missao-icon">${m.icon}</span>
+      <div>
+        <div class="missao-titulo">${m.titulo}</div>
+        <div class="missao-subtipo">${m.tema}</div>
+      </div>
+    </div>
+    <span class="pilar-tag">🎯 Pilar: ${m.pilar}</span>
+    <div class="enunciado">${m.enunciado}</div>
+  `;
+
+  if(m.tipo==='decomp'){
+    html+=`<ul class="decomp-lista" id="decomp-lista">`;
+    m.itens.forEach((it,i)=>{
+      html+=`<li class="decomp-item" id="di${i}" onclick="toggleDecomp(${i})">
+        <span class="decomp-check" id="dc${i}"></span>
+        <span>${it.txt}</span>
+      </li>`;
+    });
+    html+=`</ul>`;
+  } else if(m.tipo==='quiz'){
+    html+=`<div class="opcoes-grid">`;
+    m.opcoes.forEach((op,i)=>{
+      html+=`<button class="opcao-btn" id="op${i}" onclick="selOpcao(${i})">${op.txt}</button>`;
+    });
+    html+=`</div>`;
+  } else if(m.tipo==='algoritmo'){
+    // Embaralha criando uma lista de índices aleatória, estável e correta
+    const indices=[...Array(m.etapas.length).keys()];
+    for(let i=indices.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [indices[i],indices[j]]=[indices[j],indices[i]];
+    }
+    // Guarda a ordem embaralhada para uso no addSlot/limparSlot
+    window._shuffledOrder=indices;
+    html+=`<div style="font-size:12px;color:var(--text-m);margin-bottom:8px">👆 Toque nas etapas na ordem correta:</div>`;
+    html+=`<div class="banco" id="banco">`;
+    indices.forEach((origIdx, posEmbaralhada)=>{
+      html+=`<div class="chip-instrucao" id="chip${origIdx}" onclick="addSlot(${origIdx})">${m.etapas[origIdx]}</div>`;
+    });
+    html+=`</div>`;
+    html+=`<div style="font-size:12px;color:var(--text-m);margin-bottom:6px;font-weight:700">Seu algoritmo:</div>`;
+    html+=`<div class="slots" id="slots">`;
+    m.etapas.forEach((_,i)=>{
+      html+=`<div class="slot" id="slot${i}">
+        <span class="slot-num">${i+1}.</span>
+        <span id="slot-txt${i}" style="flex:1;color:#aaa">Toque em uma etapa acima</span>
+        <button class="slot-clear" id="slot-clr${i}" onclick="limparSlot(${i})" style="display:none">✕</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  html+=`<div class="feedback" id="fb"><div class="feedback-titulo" id="fb-titulo"></div><div id="fb-txt"></div></div>`;
+  html+=`<button class="btn-verificar" id="btn-ver" onclick="verificar()">✔ Verificar Resposta</button>`;
+  html+=`<button class="btn-amarelo" id="btn-prox" onclick="proxMissao()">${missaoAtual<3?'Próxima Missão →':'Ver Resultado 🏆'}</button>`;
+
+  document.getElementById('missao-wrap').innerHTML=html;
+}
+
+function toggleDecomp(i){
+  decompSel[i]=!decompSel[i];
+  document.getElementById(`di${i}`).classList.toggle('sel',!!decompSel[i]);
+  document.getElementById(`dc${i}`).textContent=decompSel[i]?'✓':'';
+}
+
+function selOpcao(i){
+  opcaoSel=i;
+  document.querySelectorAll('.opcao-btn').forEach((b,j)=>{
+    b.style.borderColor=j===i?'var(--verde)':'';
+    b.style.background=j===i?'var(--verde-bg)':'';
+  });
+}
+
+function addSlot(originalIdx){
+  const chip=document.getElementById(`chip${originalIdx}`);
+  if(chip.classList.contains('usado'))return;
+  const vazio=slotsFill.indexOf(null);
+  if(vazio===-1)return;
+  slotsFill[vazio]=originalIdx;
+  const m=MISSOES[missaoAtual];
+  document.getElementById(`slot-txt${vazio}`).textContent=m.etapas[originalIdx];
+  document.getElementById(`slot-txt${vazio}`).style.color='var(--text)';
+  document.getElementById(`slot${vazio}`).classList.add('cheio');
+  document.getElementById(`slot-clr${vazio}`).style.display='block';
+  chip.classList.add('usado');
+}
+
+function limparSlot(i){
+  const orig=slotsFill[i];
+  if(orig===null)return;
+  slotsFill[i]=null;
+  const m=MISSOES[missaoAtual];
+  document.getElementById(`slot-txt${i}`).textContent='Toque em uma etapa acima';
+  document.getElementById(`slot-txt${i}`).style.color='#aaa';
+  document.getElementById(`slot${i}`).classList.remove('cheio');
+  document.getElementById(`slot-clr${i}`).style.display='none';
+  document.getElementById(`chip${orig}`).classList.remove('usado');
+}
+
+function verificar(){
+  const m=MISSOES[missaoAtual];
+  let correto=false;
+
+  if(m.tipo==='decomp'){
+    let ok=true;
+    let algumSel=decompSel.some(Boolean);
+    m.itens.forEach((it,i)=>{
+      if(!!decompSel[i]!==it.correto) ok=false;
+      if(decompSel[i]&&!it.correto){
+        document.getElementById(`di${i}`).classList.remove('sel');
+        document.getElementById(`di${i}`).classList.add('errado');
+        document.getElementById(`dc${i}`).textContent='✕';
+      }
+    });
+    correto=ok&&algumSel;
+  } else if(m.tipo==='quiz'){
+    if(opcaoSel===null)return;
+    correto=m.opcoes[opcaoSel].correto;
+    m.opcoes.forEach((op,i)=>{
+      const b=document.getElementById(`op${i}`);
+      b.disabled=true;
+      if(op.correto)b.classList.add('correta');
+      else if(i===opcaoSel&&!op.correto)b.classList.add('errada');
+    });
+  } else if(m.tipo==='algoritmo'){
+    if(slotsFill.some(s=>s===null))return;
+    // slotsFill contém os índices originais na ordem que o aluno montou
+    // ordem_correta contém os índices originais na ordem esperada
+    correto=slotsFill.every((v,i)=>v===m.ordem_correta[i]);
+  }
+
+  acertos.push(correto);
+  const fb=document.getElementById('fb');
+  fb.className='feedback '+(correto?'ok':'fail');
+  document.getElementById('fb-titulo').textContent=correto?'✅ Correto!':'❌ Não foi dessa vez...';
+  document.getElementById('fb-txt').innerHTML=correto?m.fb_ok:m.fb_err;
+  fb.style.display='block';
+
+  if(correto){
+    xpTotal+=m.xp;
+    document.getElementById('xp-atual').textContent=xpTotal;
+    mostrarXP('+100 XP');
+  }
+
+  document.getElementById('btn-ver').style.display='none';
+  document.getElementById('btn-prox').style.display='block';
+  document.getElementById('btn-prox').textContent=missaoAtual<3?'Próxima Missão →':'Ver Resultado 🏆';
+}
+
+function mostrarXP(txt){
+  const el=document.createElement('div');
+  el.className='xp-pop'; el.textContent=txt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1600);
+}
+
+function proxMissao(){
+  missaoAtual++;
+  if(missaoAtual>=4) mostrarResultado();
+  else carregarMissao();
+}
+
+// ── RESULTADO ──
+function mostrarResultado(){
+  document.getElementById('tela-jogo').style.display='none';
+  const el=document.getElementById('tela-resultado');
+  el.style.display='flex';
+
+  const pct=xpTotal/400;
+  let icon,titulo,sub;
+  if(pct===1){icon='🏆';titulo='Especialista em AgroMente!';sub='Parabéns! Você dominou todos os pilares com nota máxima.';}
+  else if(pct>=.75){icon='🥇';titulo='Muito bem, Agrônomo Digital!';sub='Excelente domínio do pensamento computacional!';}
+  else if(pct>=.5){icon='🌱';titulo='Bom trabalho!';sub='Você está no caminho certo. Continue praticando!';}
+  else{icon='🌾';titulo='Plantando o conhecimento!';sub='Reveja os conceitos e tente novamente.';}
+
+  document.getElementById('res-icon').textContent=icon;
+  document.getElementById('res-titulo').textContent=titulo;
+  document.getElementById('res-sub').textContent=sub;
+  document.getElementById('placar-num').textContent=xpTotal;
+
+  const nomes=['Decomposição','Rec. de Padrões','Abstração','Algoritmos'];
+  const icos=['🧩','🔄','🔍','📋'];
+  const descs=[
+    'Dividiu o problema do plantio corretamente',
+    'Identificou o ciclo climático da precipitação',
+    'Selecionou as informações essenciais',
+    'Sequenciou o processo de ordenha corretamente'
+  ];
+
+  let conqHtml='';
+  acertos.forEach((ok,i)=>{
+    if(ok) conqHtml+=`<div class="conquista">
+      <span class="conq-ico">${icos[i]}</span>
+      <div><span class="conq-nome">${nomes[i]}</span>
+      <span class="conq-desc">${descs[i]}</span></div>
+    </div>`;
+  });
+  if(!conqHtml) conqHtml=`<p style="font-size:13px;color:var(--text-m)">Tente novamente para desbloquear conquistas!</p>`;
+  document.getElementById('conquistas').innerHTML=conqHtml;
+
+  let pilaresHtml='';
+  nomes.forEach((n,i)=>{
+    pilaresHtml+=`<div class="pilar-row">
+      <span class="pilar-lbl">${icos[i]} ${n}</span>
+      <div class="pilar-bar"><div class="pilar-fill" id="pb${i}" style="width:0%;background:${acertos[i]?'var(--verde)':'#e57373'}"></div></div>
+      <span style="font-size:12px;font-weight:700;color:${acertos[i]?'var(--verde)':'var(--err)'}"> ${acertos[i]?'✓':'✗'}</span>
+    </div>`;
+  });
+  document.getElementById('pilares-res').innerHTML=pilaresHtml;
+  setTimeout(()=>{
+    nomes.forEach((_,i)=>{
+      document.getElementById(`pb${i}`).style.width=acertos[i]?'100%':'18%';
+    });
+  },300);
+
+  enviarEmail();
+}
+
+// ── ENVIO DE E-MAIL ──
+function enviarEmail(){
+  const statusEl=document.getElementById('email-status');
+  statusEl.style.display='flex';
+  statusEl.className='email-status enviando';
+  statusEl.innerHTML='⏳ &nbsp;Enviando resultado para a professora...';
+
+  const nomes=['Decomposição','Rec. de Padrões','Abstração','Algoritmos'];
+  const linhas=acertos.map((ok,i)=>`${nomes[i]}: ${ok?'✅ Acerto (100 XP)':'❌ Erro (0 XP)'}`).join('\n');
+  const agora=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+
+  const params={
+    nome_aluno: nomeAluno,
+    pontuacao: `${xpTotal} de 400 XP (${Math.round(xpTotal/4)}%)`,
+    detalhes: linhas,
+    data: agora
+  };
+
+  try {
+    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params)
+      .then(()=>{
+        statusEl.className='email-status ok';
+        statusEl.innerHTML='✅ &nbsp;Resultado enviado para a professora com sucesso!';
+      })
+      .catch(err=>{
+        console.error('EmailJS error:', err);
+        statusEl.className='email-status err';
+        statusEl.innerHTML='⚠️ &nbsp;Não foi possível enviar o e-mail automaticamente. Anote sua pontuação e informe à professora.';
+      });
+  } catch(e) {
+    console.error('EmailJS exception:', e);
+    statusEl.className='email-status err';
+    statusEl.innerHTML='⚠️ &nbsp;Não foi possível enviar o e-mail automaticamente. Anote sua pontuação e informe à professora.';
+  }
+}
+
+function reiniciar(){
+  document.getElementById('tela-resultado').style.display='none';
+  missaoAtual=0; xpTotal=0; acertos=[]; opcaoSel=null;
+  window._shuffledOrder=null;
+  document.getElementById('tela-jogo').style.display='block';
+  carregarMissao();
+}
+</script>
+</body>
+</html>
