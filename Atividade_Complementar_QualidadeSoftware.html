@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Qualidade de Software 🧪</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0edf8;
+    --card: #ffffff;
+    --card2: #f7f4fd;
+    --accent1: #f78c8c;
+    --accent2: #f5c26b;
+    --accent3: #3ecfa3;
+    --accent4: #5aafd4;
+    --accent5: #a87de8;
+    --text: #2d2550;
+    --muted: #7a70a0;
+    --correct: #2ebc97;
+    --wrong: #e8536a;
+    --radius: 18px;
+    --border: rgba(168,125,232,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 20%, #ddd6f7 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 75%, #c8edf9 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, #fde8f0 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header { text-align: center; padding: 32px 0 24px; }
+  .header .badge { display: inline-block; background: linear-gradient(135deg, var(--accent5), var(--accent4)); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: 50px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(168,125,232,0.35); }
+  .header h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; line-height: 1.1; background: linear-gradient(135deg, var(--accent5) 0%, var(--accent4) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header p { color: var(--muted); margin-top: 10px; font-size: 1.05rem; font-weight: 600; }
+
+  .scoreboard { display: flex; justify-content: space-between; align-items: center; background: var(--card); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 24px; border: 1.5px solid var(--border); gap: 8px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(168,125,232,0.1); }
+  .score-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .score-item .label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .score-item .value { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .score-item .value.green  { color: #1fa882; }
+  .score-item .value.yellow { color: #c48a0a; }
+  .score-item .value.purple { color: var(--accent5); }
+
+  .timer-ring { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .timer-ring.warning { color: var(--wrong); animation: pulse 0.5s ease infinite alternate; }
+
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 1px; }
+  .progress-bar { height: 10px; background: rgba(168,125,232,0.15); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent4), var(--accent5)); border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+
+  .question-card { background: var(--card); border-radius: 24px; padding: 32px 32px 28px; margin-bottom: 18px; border: 1.5px solid var(--border); animation: slideIn 0.4s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; box-shadow: 0 6px 28px rgba(168,125,232,0.12); }
+  .question-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent1), var(--accent5), var(--accent4)); }
+  .question-source { display: inline-flex; align-items: center; gap: 6px; background: rgba(168,125,232,0.1); color: var(--accent5); border-radius: 50px; padding: 4px 14px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; border: 1px solid rgba(168,125,232,0.2); }
+  .question-text { font-size: 1.3rem; font-weight: 800; line-height: 1.6; color: var(--text); }
+  .question-num { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+
+  .options-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+  .option-btn { background: var(--card2); border: 2px solid rgba(168,125,232,0.15); border-radius: var(--radius); padding: 16px 20px; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 700; text-align: left; cursor: pointer; transition: all 0.18s ease; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(168,125,232,0.06); }
+  .option-btn:hover:not(:disabled) { border-color: var(--accent5); background: rgba(168,125,232,0.08); transform: translateX(4px); box-shadow: 0 4px 16px rgba(168,125,232,0.15); }
+  .option-btn .letter { width: 34px; height: 34px; border-radius: 10px; background: rgba(168,125,232,0.12); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; flex-shrink: 0; color: var(--accent5); transition: all 0.18s; }
+  .option-btn.correct { background: rgba(46,188,151,0.1); border-color: var(--correct); color: #1a8a6e; }
+  .option-btn.correct .letter { background: var(--correct); color: #fff; }
+  .option-btn.wrong { background: rgba(232,83,106,0.08); border-color: var(--wrong); color: #c0364f; }
+  .option-btn.wrong .letter { background: var(--wrong); color: #fff; }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-box { border-radius: var(--radius); padding: 16px 20px; margin-top: 14px; font-weight: 700; font-size: 1rem; line-height: 1.5; display: none; animation: popIn 0.3s cubic-bezier(.4,0,.2,1); }
+  .feedback-box.show { display: flex; gap: 12px; align-items: flex-start; }
+  .feedback-box.correct-fb { background: rgba(46,188,151,0.1); border: 1.5px solid rgba(46,188,151,0.35); color: #1a8a6e; }
+  .feedback-box.wrong-fb   { background: rgba(232,83,106,0.08); border: 1.5px solid rgba(232,83,106,0.3); color: #c0364f; }
+  .feedback-box .icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 1px; }
+  .feedback-box .explanation { color: var(--muted); font-weight: 600; margin-top: 4px; font-size: 0.95rem; }
+
+  .next-btn { width: 100%; margin-top: 16px; background: linear-gradient(135deg, var(--accent4), var(--accent5)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 900; padding: 16px; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s, opacity 0.15s; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(90,175,212,0.3); }
+  .next-btn.show { display: flex; animation: popIn 0.3s ease; }
+  .next-btn:hover { transform: translateY(-2px); opacity: 0.92; }
+  .next-btn:active { transform: translateY(0); }
+
+  /* ---- Dissertative question styles ---- */
+  .essay-card { background: var(--card); border-radius: 24px; padding: 32px 32px 28px; margin-bottom: 18px; border: 1.5px solid var(--border); animation: slideIn 0.4s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; box-shadow: 0 6px 28px rgba(168,125,232,0.12); display: none; }
+  .essay-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent3), var(--accent5), var(--accent2)); }
+  .essay-card.show { display: block; }
+  .essay-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(62,207,163,0.12); color: #1a8a6e; border-radius: 50px; padding: 4px 14px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; border: 1px solid rgba(62,207,163,0.25); }
+  .essay-title { font-size: 1.25rem; font-weight: 900; color: var(--text); margin-bottom: 12px; }
+  .essay-context { background: rgba(168,125,232,0.07); border-left: 4px solid var(--accent5); border-radius: 0 12px 12px 0; padding: 14px 18px; margin-bottom: 20px; color: var(--text); font-size: 1rem; font-weight: 600; line-height: 1.6; }
+  .essay-questions { display: flex; flex-direction: column; gap: 16px; }
+  .essay-item label { display: block; font-size: 1rem; font-weight: 800; color: var(--accent5); margin-bottom: 8px; }
+  .essay-item textarea { width: 100%; border: 2px solid rgba(168,125,232,0.2); border-radius: 14px; padding: 14px 16px; font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text); background: var(--card2); resize: vertical; min-height: 90px; transition: border-color 0.18s, box-shadow 0.18s; outline: none; }
+  .essay-item textarea:focus { border-color: var(--accent5); box-shadow: 0 0 0 3px rgba(168,125,232,0.15); }
+  .essay-item textarea::placeholder { color: var(--muted); font-weight: 600; }
+  .essay-next-btn { width: 100%; margin-top: 20px; background: linear-gradient(135deg, var(--accent3), var(--accent4)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 900; padding: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s, opacity 0.15s; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(62,207,163,0.3); }
+  .essay-next-btn:hover { transform: translateY(-2px); opacity: 0.92; }
+  .essay-save-note { text-align: center; margin-top: 10px; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+
+  .result-screen { display: none; text-align: center; animation: slideIn 0.5s cubic-bezier(.4,0,.2,1); }
+  .result-screen.show { display: block; }
+  .result-emoji { font-size: 5rem; margin-bottom: 16px; display: block; animation: bounce 0.8s ease infinite alternate; }
+  .result-title { font-size: 2rem; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent5), var(--accent4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .result-sub { color: var(--muted); font-size: 1.05rem; font-weight: 600; margin-bottom: 28px; }
+  .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--card); border-radius: var(--radius); padding: 18px 10px; border: 1.5px solid var(--border); box-shadow: 0 4px 16px rgba(168,125,232,0.1); }
+  .stat-card .sv { font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--accent5); }
+  .stat-card .sl { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 4px; }
+  .essay-summary { background: var(--card); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 24px; border: 1.5px solid var(--border); text-align: left; box-shadow: 0 4px 16px rgba(168,125,232,0.1); }
+  .essay-summary h3 { font-size: 1rem; font-weight: 900; color: var(--accent5); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; }
+  .essay-summary-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .essay-summary-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .essay-summary-item .q-label { font-size: 0.85rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .essay-summary-item .q-answer { font-size: 0.95rem; font-weight: 600; color: var(--text); line-height: 1.5; white-space: pre-wrap; }
+  .essay-summary-item .q-answer.empty { color: var(--muted); font-style: italic; }
+  .restart-btn { background: linear-gradient(135deg, var(--accent5), var(--accent1)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 900; padding: 15px 36px; cursor: pointer; transition: transform 0.15s; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(168,125,232,0.3); }
+  .restart-btn:hover { transform: scale(1.04); }
+
+  .streak-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: linear-gradient(135deg, var(--accent5), var(--accent4)); color: #fff; font-weight: 900; font-size: 1rem; padding: 10px 22px; border-radius: 50px; z-index: 999; transition: transform 0.4s cubic-bezier(.4,0,.2,1); white-space: nowrap; box-shadow: 0 6px 20px rgba(168,125,232,0.4); }
+  .streak-toast.show { transform: translateX(-50%) translateY(0); }
+
+  @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn   { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  @keyframes bounce  { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+  @keyframes pulse   { from { opacity: 1; } to { opacity: 0.5; } }
+
+  @media (max-width: 480px) {
+    .question-card, .essay-card { padding: 22px 18px 20px; }
+    .question-text, .essay-title { font-size: 1.1rem; }
+    .option-btn { font-size: 1rem; }
+    .result-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card .sv { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div id="streakToast" class="streak-toast">🔥 Sequência incrível!</div>
+
+<div class="container">
+  <div class="header">
+    <div class="badge">🧪 Qualidade de Software</div>
+    <h1>Quiz de QA</h1>
+    <p>Testes, métricas, erros e metodologias ágeis</p>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-item"><span class="label">⚡ Pontos</span><span class="value yellow" id="score">0</span></div>
+    <div class="score-item"><span class="label">✅ Acertos</span><span class="value green" id="correct-count">0</span></div>
+    <div class="score-item"><span class="label">🔥 Sequência</span><span class="value purple" id="streak">0</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="progress-text">Questão 1 de 15</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Multiple choice area -->
+  <div id="quiz-area">
+    <div class="question-card" id="question-card">
+      <div class="question-num" id="q-num">Questão 01</div>
+      <div class="question-source" id="q-source">📋 Fonte</div>
+      <div class="question-text" id="q-text">Carregando...</div>
+      <div class="options-grid" id="options"></div>
+      <div class="feedback-box" id="feedback">
+        <span class="icon" id="fb-icon"></span>
+        <div>
+          <div id="fb-title"></div>
+          <div class="explanation" id="fb-explanation"></div>
+        </div>
+      </div>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">
+      Próxima questão →
+    </button>
+  </div>
+
+  <!-- Essay question 1 -->
+  <div class="essay-card" id="essay-1">
+    <div class="essay-badge">✍️ Estudo de Caso — Questão 16</div>
+    <div class="essay-title">Login do Sistema</div>
+    <div class="essay-context">
+      Um aluno informou que não consegue acessar o aplicativo <strong>EduConnect</strong> mesmo digitando a senha correta. Após várias tentativas, o sistema bloqueou a conta automaticamente.
+    </div>
+    <div class="essay-questions">
+      <div class="essay-item">
+        <label>a) Qual pode ser o problema do sistema?</label>
+        <textarea id="essay1-a" placeholder="Descreva o possível problema técnico no sistema..."></textarea>
+      </div>
+      <div class="essay-item">
+        <label>b) Qual teste deveria ser realizado pela equipe de QA?</label>
+        <textarea id="essay1-b" placeholder="Descreva o tipo de teste que a equipe de QA deveria executar..."></textarea>
+      </div>
+    </div>
+    <button class="essay-next-btn" onclick="nextEssay(1)">Próxima questão →</button>
+    <p class="essay-save-note">💡 Sua resposta será exibida no resumo final.</p>
+  </div>
+
+  <!-- Essay question 2 -->
+  <div class="essay-card" id="essay-2">
+    <div class="essay-badge">✍️ Estudo de Caso — Questão 17</div>
+    <div class="essay-title">Emissão de Boletim</div>
+    <div class="essay-context">
+      Durante o período de entrega de notas, vários responsáveis reclamaram que o boletim não carregava no aplicativo. Em alguns casos, a tela ficava carregando infinitamente.
+    </div>
+    <div class="essay-questions">
+      <div class="essay-item">
+        <label>a) Qual é o possível erro encontrado no sistema?</label>
+        <textarea id="essay2-a" placeholder="Descreva o possível erro técnico..."></textarea>
+      </div>
+      <div class="essay-item">
+        <label>b) Qual seria a gravidade desse problema? Explique.</label>
+        <textarea id="essay2-b" placeholder="Classifique a gravidade e justifique sua escolha..."></textarea>
+      </div>
+      <div class="essay-item">
+        <label>c) Cite uma evidência que poderia ser usada para registrar esse defeito.</label>
+        <textarea id="essay2-c" placeholder="Que tipo de evidência poderia ser usada?..."></textarea>
+      </div>
+    </div>
+    <button class="essay-next-btn" onclick="finishQuiz()">Ver Resultado Final 🏆</button>
+    <p class="essay-save-note">💡 Sua resposta será exibida no resumo final.</p>
+  </div>
+
+  <!-- Result screen -->
+  <div class="result-screen" id="result-screen">
+    <span class="result-emoji" id="result-emoji">🏆</span>
+    <div class="result-title" id="result-title">Resultado</div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="result-stats">
+      <div class="stat-card"><div class="sv" id="r-score" style="color:var(--accent2)">0</div><div class="sl">Pontos</div></div>
+      <div class="stat-card"><div class="sv" id="r-correct" style="color:var(--accent3)">0/15</div><div class="sl">Acertos</div></div>
+      <div class="stat-card"><div class="sv" id="r-pct" style="color:var(--accent5)">0%</div><div class="sl">Aproveit.</div></div>
+    </div>
+
+    <!-- Essay answers summary -->
+    <div class="essay-summary" id="essay-summary">
+      <h3>📝 Suas Respostas Dissertativas</h3>
+      <div class="essay-summary-item">
+        <div class="q-label">Q16 — a) Problema no sistema (Login)</div>
+        <div class="q-answer" id="sum-1a"></div>
+      </div>
+      <div class="essay-summary-item">
+        <div class="q-label">Q16 — b) Teste a ser realizado</div>
+        <div class="q-answer" id="sum-1b"></div>
+      </div>
+      <div class="essay-summary-item">
+        <div class="q-label">Q17 — a) Possível erro (Boletim)</div>
+        <div class="q-answer" id="sum-2a"></div>
+      </div>
+      <div class="essay-summary-item">
+        <div class="q-label">Q17 — b) Gravidade do problema</div>
+        <div class="q-answer" id="sum-2b"></div>
+      </div>
+      <div class="essay-summary-item">
+        <div class="q-label">Q17 — c) Evidência do defeito</div>
+        <div class="q-answer" id="sum-2c"></div>
+      </div>
+    </div>
+
+    <button class="restart-btn" onclick="restartQuiz()">🔄 Jogar Novamente</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    source: "QA – Classificação de Defeitos",
+    text: "Ao acessar a tela de notas, o logotipo da escola aparece distorcido. Esse problema pode ser classificado como:",
+    options: ["Crítico", "Alto", "Baixo", "Médio"],
+    correct: 2,
+    explanation: "Um logotipo distorcido é um problema visual e estético que não impede o uso do sistema. Por isso, é classificado como gravidade Baixa."
+  },
+  {
+    source: "QA – Classificação de Defeitos",
+    text: "O sistema permite que o usuário entre sem senha. Esse problema é:",
+    options: ["Baixo", "Médio", "Alto", "Crítico"],
+    correct: 3,
+    explanation: "Permitir acesso sem senha é uma falha grave de segurança, pois expõe dados de todos os usuários. Esse tipo de problema é classificado como Crítico."
+  },
+  {
+    source: "QA – Gravidade de Erros",
+    text: "Quando o usuário clica em 'Cadastrar Responsável', o aplicativo fecha sozinho. A gravidade desse erro é:",
+    options: ["Baixa", "Média", "Alta", "Sem gravidade"],
+    correct: 2,
+    explanation: "O aplicativo fechar ao tentar realizar uma função essencial impede o uso do sistema, tornando a gravidade Alta. O usuário não consegue completar a tarefa."
+  },
+  {
+    source: "QA – Métricas de Teste",
+    text: "Foram executados 100 testes e 82 foram aprovados. Qual é a taxa de aprovação?",
+    options: ["18%", "50%", "82%", "100%"],
+    correct: 2,
+    explanation: "Taxa de aprovação = (testes aprovados ÷ total de testes) × 100 = (82 ÷ 100) × 100 = 82%."
+  },
+  {
+    source: "QA – Métricas de Teste",
+    text: "Foram executados 150 testes e 30 falharam. Qual é a taxa de falha?",
+    options: ["10%", "20%", "30%", "80%"],
+    correct: 1,
+    explanation: "Taxa de falha = (testes que falharam ÷ total) × 100 = (30 ÷ 150) × 100 = 20%."
+  },
+  {
+    source: "QA – Cobertura Funcional",
+    text: "O sistema possui 6 módulos e apenas 4 foram testados. Qual é a cobertura funcional?",
+    options: ["40%", "50%", "66,6%", "100%"],
+    correct: 2,
+    explanation: "Cobertura funcional = (módulos testados ÷ total de módulos) × 100 = (4 ÷ 6) × 100 ≈ 66,6%."
+  },
+  {
+    source: "QA – Tipos de Erro",
+    text: "O usuário digita a senha correta, mas o sistema informa 'senha inválida'. Esse erro está relacionado a:",
+    options: ["Layout", "Validação/Login", "Banco de dados", "Desempenho"],
+    correct: 1,
+    explanation: "Quando o sistema rejeita uma senha válida, o problema está no processo de validação ou autenticação (Login), não em aspectos visuais ou de desempenho."
+  },
+  {
+    source: "QA – Tipos de Erro",
+    text: "O aplicativo demora mais de 2 minutos para abrir. Esse problema está relacionado a:",
+    options: ["Segurança", "Cadastro", "Desempenho", "Interface"],
+    correct: 2,
+    explanation: "Lentidão excessiva para carregar é um problema de Desempenho. Um sistema lento compromete a experiência do usuário e pode indicar gargalos no código ou servidor."
+  },
+  {
+    source: "QA – Documentação de Testes",
+    text: "Qual alternativa apresenta um caso de teste correto?",
+    options: ["Apenas informar o erro encontrado", "Descrever somente o resultado esperado", "Informar ID, cenário, passos e resultado esperado", "Criar apenas prints da tela"],
+    correct: 2,
+    explanation: "Um caso de teste completo deve ter: ID de identificação, cenário (contexto), passos para reprodução e resultado esperado. Isso garante que qualquer pessoa possa replicar e analisar o teste."
+  },
+  {
+    source: "QA – Metodologias Ágeis",
+    text: "Em metodologias ágeis, o feedback dos usuários é importante porque:",
+    options: ["O sistema nunca muda", "Não existem testes", "Permite melhorias constantes no sistema", "Evita atualizações futuras"],
+    correct: 2,
+    explanation: "No desenvolvimento ágil, o feedback contínuo dos usuários é o que orienta os ciclos de melhoria (sprints), garantindo que o sistema evolua de forma alinhada às necessidades reais."
+  },
+  {
+    source: "QA – Metodologias",
+    text: "Qual metodologia é mais adequada para sistemas que recebem atualizações frequentes?",
+    options: ["Waterfall", "Ágil", "Cascata", "Linear"],
+    correct: 1,
+    explanation: "A metodologia Ágil (ex.: Scrum) é a mais indicada para sistemas com atualizações frequentes, pois trabalha em ciclos curtos com entregas contínuas e adaptações rápidas."
+  },
+  {
+    source: "QA – Análise de Defeitos",
+    text: "Quando o sistema envia o mesmo boletim três vezes para o responsável, isso pode indicar:",
+    options: ["Problema visual", "Erro de internet", "Duplicidade de envio/processamento", "Erro de hardware"],
+    correct: 2,
+    explanation: "Enviar o mesmo documento múltiplas vezes indica uma falha na lógica de processamento ou controle de envio, caracterizando um problema de duplicidade de processamento."
+  },
+  {
+    source: "QA – Tipos de Teste",
+    text: "Um teste negativo tem como objetivo:",
+    options: ["Confirmar apenas funcionalidades corretas", "Verificar como o sistema reage a erros", "Melhorar o design", "Criar novas funções"],
+    correct: 1,
+    explanation: "O teste negativo verifica o comportamento do sistema diante de entradas inválidas ou situações inesperadas, garantindo que ele trate erros de forma adequada sem travar ou expor dados."
+  },
+  {
+    source: "QA – Evidências de Defeito",
+    text: "Qual opção representa uma evidência de defeito?",
+    options: ["Música do sistema", "Nome do aluno", "Print da tela com erro", "Papel do usuário"],
+    correct: 2,
+    explanation: "Uma evidência de defeito deve ser um registro visual ou técnico do problema, como um print da tela mostrando o erro. Isso facilita a análise e correção pela equipe de desenvolvimento."
+  },
+  {
+    source: "QA – Fundamentos",
+    text: "O principal objetivo dos testes de software é:",
+    options: ["Deixar o sistema mais bonito", "Diminuir o tamanho do aplicativo", "Encontrar erros antes do lançamento", "Trocar a linguagem de programação"],
+    correct: 2,
+    explanation: "O objetivo central dos testes é identificar e corrigir defeitos antes que o software chegue ao usuário final, reduzindo custos e garantindo qualidade e confiabilidade."
+  }
+];
+
+let currentQ = 0, score = 0, correctCount = 0, streak = 0, maxStreak = 0;
+let answered = false, timerInterval = null, timeLeft = 30;
+let shuffledQ = [];
+let phase = 'quiz'; // 'quiz' | 'essay1' | 'essay2' | 'result'
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function init() {
+  shuffledQ = shuffle(questions);
+  currentQ = 0; score = 0; correctCount = 0; streak = 0; answered = false; phase = 'quiz';
+  updateScoreboard();
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('essay-1').classList.remove('show');
+  document.getElementById('essay-2').classList.remove('show');
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('progress-text').textContent = 'Questão 1 de 15';
+  // Clear essay fields
+  ['essay1-a','essay1-b','essay2-a','essay2-b','essay2-c'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = shuffledQ[currentQ];
+  answered = false;
+
+  document.getElementById('q-num').textContent = `Questão ${String(currentQ+1).padStart(2,'0')}`;
+  document.getElementById('q-source').textContent = `📋 ${q.source}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="letter">${letters[i]}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    opts.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback-box';
+  document.getElementById('next-btn').className = 'next-btn';
+
+  const pct = Math.round((currentQ / shuffledQ.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-text').textContent = `Questão ${currentQ+1} de ${shuffledQ.length}`;
+
+  startTimer();
+  document.getElementById('question-card').style.animation = 'none';
+  setTimeout(() => { document.getElementById('question-card').style.animation = 'slideIn 0.4s cubic-bezier(.4,0,.2,1)'; }, 10);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = 30;
+  updateTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 0) { clearInterval(timerInterval); if (!answered) timeOut(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  // No timer display needed for this version – just track internally
+}
+
+function timeOut() {
+  answered = true; streak = 0;
+  document.getElementById('streak').textContent = streak;
+  const q = shuffledQ[currentQ];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[q.correct].classList.add('correct');
+  showFeedback(false, q.explanation);
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  const q = shuffledQ[currentQ];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  const isCorrect = idx === q.correct;
+  if (isCorrect) {
+    btns[idx].classList.add('correct');
+    const timeBonus = Math.max(0, Math.floor(timeLeft / 3));
+    const streakBonus = streak >= 2 ? streak * 20 : 0;
+    score += 100 + timeBonus + streakBonus;
+    correctCount++;
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    if (streak >= 3) showStreakToast(streak);
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+    streak = 0;
+  }
+  updateScoreboard();
+  showFeedback(isCorrect, q.explanation);
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function showFeedback(correct, explanation) {
+  document.getElementById('fb-icon').textContent = correct ? '✅' : '❌';
+  document.getElementById('fb-title').textContent = correct ? 'Correto! Muito bem!' : 'Ops! Não foi dessa vez.';
+  document.getElementById('fb-explanation').textContent = explanation;
+  document.getElementById('feedback').className = 'feedback-box show ' + (correct ? 'correct-fb' : 'wrong-fb');
+}
+
+function updateScoreboard() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('streak').textContent = streak;
+}
+
+function showStreakToast(s) {
+  const t = document.getElementById('streakToast');
+  const msgs = { 3:'🔥 Tá pegando fogo! +3 seguidas!', 5:'💥 IMPARÁVEL! 5 acertos!', 7:'🚀 LENDÁRIO! 7 SEGUIDAS!', 10:'👑 PERFEITO! 10 seguidas!' };
+  t.textContent = msgs[s] || `🔥 ${s} seguidas! Incrível!`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= shuffledQ.length) {
+    // Done with MC questions → go to essay 1
+    document.getElementById('quiz-area').style.display = 'none';
+    document.getElementById('essay-1').classList.add('show');
+    document.getElementById('progress-fill').style.width = '88%';
+    document.getElementById('progress-pct').textContent = '88%';
+    document.getElementById('progress-text').textContent = 'Questão 16 de 17';
+    phase = 'essay1';
+  } else {
+    showQuestion();
+  }
+}
+
+function nextEssay(num) {
+  if (num === 1) {
+    document.getElementById('essay-1').classList.remove('show');
+    document.getElementById('essay-2').classList.add('show');
+    document.getElementById('progress-fill').style.width = '94%';
+    document.getElementById('progress-pct').textContent = '94%';
+    document.getElementById('progress-text').textContent = 'Questão 17 de 17';
+    phase = 'essay2';
+  }
+}
+
+function finishQuiz() {
+  document.getElementById('essay-2').classList.remove('show');
+  document.getElementById('result-screen').classList.add('show');
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('progress-pct').textContent = '100%';
+  document.getElementById('progress-text').textContent = 'Concluído!';
+
+  const pct = Math.round((correctCount / shuffledQ.length) * 100);
+  document.getElementById('r-score').textContent = score;
+  document.getElementById('r-correct').textContent = `${correctCount}/${shuffledQ.length}`;
+  document.getElementById('r-pct').textContent = pct + '%';
+
+  let emoji, title, sub;
+  if (pct === 100) { emoji='🏆'; title='Nota 10! Perfeito!';    sub='Você gabaritou a parte objetiva! Expert em QA!'; }
+  else if (pct>=80){ emoji='🥇'; title='Excelente!';            sub='Ótimo domínio sobre Qualidade de Software!'; }
+  else if (pct>=60){ emoji='😎'; title='Muito Bem!';            sub='Bom desempenho! Revise os erros e você vai arrasar.'; }
+  else if (pct>=40){ emoji='📚'; title='Continue Estudando!';   sub='Ainda há espaço para melhorar. Revise o conteúdo de QA!'; }
+  else             { emoji='💪'; title='Não Desista!';          sub='Revise os conceitos de testes e tente novamente!'; }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent = sub;
+
+  // Populate essay summary
+  const fields = [
+    ['sum-1a', 'essay1-a'],
+    ['sum-1b', 'essay1-b'],
+    ['sum-2a', 'essay2-a'],
+    ['sum-2b', 'essay2-b'],
+    ['sum-2c', 'essay2-c'],
+  ];
+  fields.forEach(([sumId, inputId]) => {
+    const val = document.getElementById(inputId).value.trim();
+    const el = document.getElementById(sumId);
+    if (val) {
+      el.textContent = val;
+      el.classList.remove('empty');
+    } else {
+      el.textContent = '(Não respondido)';
+      el.classList.add('empty');
+    }
+  });
+}
+
+function restartQuiz() {
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('quiz-area').style.display = 'block';
+  init();
+}
+
+// Particles
+(function() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  const SYMBOLS = ['🧪','🐛','✅','❌','🔍','⚙️','📋','🖥️'];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function createParticle() { return { x: Math.random()*W, y: H+20, size: 10+Math.random()*12, speed: 0.4+Math.random()*0.7, symbol: SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)], opacity: 0.08+Math.random()*0.12, drift: (Math.random()-0.5)*0.4 }; }
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    if (particles.length < 14 && Math.random() < 0.04) particles.push(createParticle());
+    particles = particles.filter(p => p.y > -30);
+    particles.forEach(p => { p.y -= p.speed; p.x += p.drift; ctx.globalAlpha = p.opacity; ctx.font = `${p.size}px serif`; ctx.fillText(p.symbol, p.x, p.y); });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+  }
+  resize(); window.addEventListener('resize', resize); animate();
+})();
+
+init();
+</script>
+</body>
+</html>
